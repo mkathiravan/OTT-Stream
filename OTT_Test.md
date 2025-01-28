@@ -54,3 +54,81 @@ Encode the video at different bitrates and resolutions.
 
 Create a manifest file (e.g., .m3u8 for HLS, .mpd for DASH) that references these renditions.
 
+ ##### 3. Configure ExoPlayer in Your App
+
+  a. Add ExoPlayer to Your Project
+
+      implementation 'com.google.android.exoplayer:exoplayer:2.x.x'
+
+  b. Initialize ExoPlayer
+
+        val exoPlayer = ExoPlayer.Builder(context).build()
+
+        val mediaItem = MediaItem.fromUri("https://your-streaming-url/manifest.mpd") // DASH
+        exoPlayer.setMediaItem(mediaItem)
+        
+        // Attach player to a UI component (e.g., PlayerView)
+        playerView.player = exoPlayer
+        
+        // Prepare and play
+        exoPlayer.prepare()
+        exoPlayer.playWhenReady = true
+
+##### 4. Handle Bandwidth Changes
+    
+        val trackSelector = DefaultTrackSelector(context)
+        trackSelector.parameters = trackSelector.parameters.buildUpon()
+        .setMaxVideoSize(1920, 1080) // Limit resolution if necessary
+        .build()
+    
+         val exoPlayer = ExoPlayer.Builder(context)
+        .setTrackSelector(trackSelector)
+        .build()
+
+##### 5. Add Playback controls
+
+        <com.google.android.exoplayer2.ui.PlayerView
+    android:id="@+id/player_view"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    app:use_controller="true" />
+
+##### 6.  Monitor Playback Events
+
+      exoPlayer.addListener(object : Player.Listener {
+    override fun onPlaybackStateChanged(playbackState: Int) {
+        when (playbackState) {
+            Player.STATE_BUFFERING -> { /* Show loading indicator */ }
+            Player.STATE_READY -> { /* Hide loading indicator */ }
+            Player.STATE_ENDED -> { /* Playback ended */ }
+        }
+    }
+
+    override fun onPlayerError(error: PlaybackException) {
+        // Handle errors
+    }
+    })
+
+
+##### 7. Optimize Buffering
+
+    val loadControl = DefaultLoadControl.Builder()
+    .setBufferDurationsMs(
+        minBufferMs = 15000, // Min buffer before playback starts
+        maxBufferMs = 50000, // Max buffer size
+        bufferForPlaybackMs = 3000, // Buffer for playback start
+        bufferForPlaybackAfterRebufferMs = 5000 // Buffer after a rebuffer
+    ).build()
+
+    val exoPlayer = ExoPlayer.Builder(context)
+    .setLoadControl(loadControl)
+    .build()
+
+
+##### 8. DRM Support (Optional)
+
+     val drmSessionManager = DefaultDrmSessionManager.Builder()
+    .setMultiSession(true)
+    .build(MediaDrmCallback())
+
+
